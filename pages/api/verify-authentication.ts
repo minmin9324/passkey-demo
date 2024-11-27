@@ -7,7 +7,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "./auth/[...nextauth]";
 
 const rpID = "passkey-demo-flax.vercel.app"; // Relying Party ID
-const rpOrigin = `http://${rpID}`; // Origin (HTTPS 환경에서 동작)
+const rpOrigin = `https://${rpID}`; // Origin (HTTPS 환경에서 동작)
 
 // 서버에서 생성한 challenge를 세션에 저장한다고 가정
 
