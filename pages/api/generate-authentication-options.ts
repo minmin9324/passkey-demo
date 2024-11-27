@@ -1,7 +1,7 @@
 import { generateAuthenticationOptions } from "@simplewebauthn/server";
 import type { NextApiRequest, NextApiResponse } from "next";
 
-const rpID = "localhost"; // 실제 배포 환경에서는 도메인 이름
+const rpID = "passkey-demo-flax.vercel.app"; // 실제 배포 환경에서는 도메인 이름
 
 export default async function handler(
   req: NextApiRequest,

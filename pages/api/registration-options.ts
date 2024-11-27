@@ -25,7 +25,7 @@ export default async function handler(
 
   const options = generateRegistrationOptions({
     rpName: "My App",
-    rpID: "localhost",
+    rpID: "passkey-demo-flax.vercel.app",
     userID,
     userName,
     attestationType: "direct",

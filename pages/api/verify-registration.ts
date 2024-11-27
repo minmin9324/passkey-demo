@@ -3,8 +3,8 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { authOptions } from "./auth/[...nextauth]";
 import { getServerSession } from "next-auth";
 
-const rpID = "localhost"; // 실제 배포 환경에서는 도메인 이름으로 설정
-const origin = `http://${rpID}:3000`;
+const rpID = "passkey-demo-flax.vercel.app"; // 실제 배포 환경에서는 도메인 이름으로 설정
+const origin = `http://${rpID}`;
 
 export default async function handler(
   req: NextApiRequest,
