@@ -1,115 +1,201 @@
-import Image from "next/image";
-import localFont from "next/font/local";
+import { useState } from "react";
+import {
+  startAuthentication,
+  startRegistration,
+} from "@simplewebauthn/browser";
+import LoginButton from "@/components/login";
+import { useSession } from "next-auth/react";
 
-const geistSans = localFont({
-  src: "./fonts/GeistVF.woff",
-  variable: "--font-geist-sans",
-  weight: "100 900",
-});
-const geistMono = localFont({
-  src: "./fonts/GeistMonoVF.woff",
-  variable: "--font-geist-mono",
-  weight: "100 900",
-});
+const Home = () => {
+  const [message, setMessage] = useState<string>("");
+  const { update } = useSession();
 
-export default function Home() {
+  const handleRegister = async () => {
+    try {
+      // 서버에서 등록 옵션 가져오기
+      const optionsResponse = await fetch("/api/registration-options");
+      const options = await optionsResponse.json();
+      console.log("origin", options.challenge);
+      await update({
+        challenge: options.challenge,
+      });
+
+      // SimpleWebAuthn으로 등록 시작
+
+      const attestationResponse = await startRegistration({
+        optionsJSON: options,
+      }).catch((error) => {
+        console.error(error);
+        setMessage(`오류 발생: ${(error as { message: string }).message}`);
+      });
+
+      // 서버에 등록 응답 전송
+      const verificationResponse = await fetch("/api/verify-registration", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(attestationResponse),
+      });
+
+      console.log({ verificationResponse });
+
+      const verificationResult = await verificationResponse.json();
+      console.log(verificationResult);
+      if (verificationResult.success) {
+        setMessage("Passkey 등록 성공!");
+        localStorage.setItem("publicKey", verificationResult.publicKey);
+      } else {
+        setMessage("Passkey 등록 실패");
+      }
+    } catch (error) {
+      setMessage(`오류 발생: ${(error as { message: string }).message}`);
+    }
+  };
+
   return (
-    <div
-      className={`${geistSans.variable} ${geistMono.variable} grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]`}
-    >
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              pages/index.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+    <>
+      <LoginButton />
+      ===================
+      <div className="">
+        <button
+          className=" bg-red-200 rounded px-3 py-2"
+          onClick={handleRegister}
+        >
+          Passkey 등록하기
+        </button>
+        <p className="text-yellow-600">{message}</p>
+      </div>
+      ===================
+      <PasskeyList />
+      ===================
+      <LoginWithPasskey />
+    </>
+  );
+};
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+export default Home;
+
+const PasskeyList = () => {
+  const [passkey, setPasskey] = useState<string>("");
+  const [error, setError] = useState<string | null>(null);
+  const { data } = useSession();
+
+  const getPasskeys = async () => {
+    try {
+      if (!data?.challenge) {
+        console.log("challenge is null");
+        return;
+      }
+      const publicKeyCredentialRequestOptions: PublicKeyCredentialRequestOptions =
+        {
+          challenge: base64urlToUint8Array(data.challenge),
+          allowCredentials: [], // 특정 Passkey 제한 없음 (전체 Passkey 목록 가져오기)
+          timeout: 60000, // 타임아웃 설정
+          userVerification: "preferred", // "required" | "preferred" | "discouraged"
+        };
+
+      const credential = await navigator.credentials.get({
+        publicKey: publicKeyCredentialRequestOptions,
+      });
+
+      if (credential) {
+        console.log(credential);
+        setPasskey(credential.id);
+      }
+    } catch (err) {
+      console.error(err);
+      setError("Passkey 목록을 가져오는 중 오류가 발생했습니다.");
+    }
+  };
+
+  return (
+    <div>
+      <h1>브라우저에 저장된 Passkey 목록에서 passkey 조회</h1>
+      <button className=" bg-red-200 rounded px-3 py-2" onClick={getPasskeys}>
+        Passkey 가져오기
+      </button>
+      {error && <p style={{ color: "red" }}>{error}</p>}
+      <ul>{passkey && <li>{passkey}</li>}</ul>
     </div>
   );
+};
+
+const LoginWithPasskey = () => {
+  const [message, setMessage] = useState<string>("");
+  const { update } = useSession();
+
+  const handleLogin = async () => {
+    try {
+      setMessage("로그인 시도 중...");
+
+      const response = await fetch("/api/generate-authentication-options", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      const options = await response.json();
+
+      console.log({ options });
+      // `challenge`를 Uint8Array로 변환
+      await update({
+        challenge: options.challenge,
+      });
+
+      const authenticationResponse = await startAuthentication({
+        optionsJSON: {
+          challenge: options.challenge,
+          userVerification: "preferred",
+          allowCredentials: options.allowCredentials,
+        },
+      });
+
+      console.log({ authenticationResponse });
+
+      // 서버로 인증 응답 전송
+      const publicKey = localStorage.getItem("publicKey");
+
+      const verificationResponse = await fetch("/api/verify-authentication", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          rawId: authenticationResponse.rawId,
+          response: authenticationResponse.response,
+          challenge: options.challenge, // 서버에서 받은 challenge
+          publicKey, // 클라이언트가 보관한 공개 키
+          counter: 0, // 클라이언트가 보관한 counter
+        }),
+      });
+
+      const result = await verificationResponse.json();
+
+      if (result.success) {
+        setMessage("로그인 성공!");
+      } else {
+        setMessage("로그인 실패: " + result.message);
+      }
+    } catch (error) {
+      console.error(error);
+      setMessage(`오류 발생: ${(error as { message: string }).message}`);
+    }
+  };
+
+  return (
+    <div>
+      <h1>Passkey로 로그인</h1>
+      <button className=" bg-red-200 rounded px-3 py-2" onClick={handleLogin}>
+        로그인
+      </button>
+      <p className=" text-yellow-600">{message}</p>
+    </div>
+  );
+};
+
+function base64urlToUint8Array(base64url: string): Uint8Array {
+  const base64 = base64url.replace(/-/g, "+").replace(/_/g, "/");
+  const pad = "=".repeat((4 - (base64.length % 4)) % 4);
+  const binary = atob(base64 + pad);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes;
 }
