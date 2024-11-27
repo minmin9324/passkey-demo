@@ -32,9 +32,6 @@ export default async function handler(
         .json({ success: false, message: "Missing required parameters" });
     }
 
-    // // 2. 서버에서 생성한 challenge 가져오기
-    // const expectedChallenge = challenge;
-
     // // 3. Passkey 정보 구성
     const credential = {
       publicKey: base64urlToUint8Array(publicKey),

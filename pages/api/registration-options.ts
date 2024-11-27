@@ -36,12 +36,6 @@ export default async function handler(
   });
 
   const result = await options;
-  console.log("origin server", result.challenge);
-
-  session.challenge = result.challenge;
-
-  console.log({ session }, 2);
-  console.log({ options });
 
   return res.status(200).json(result);
 }

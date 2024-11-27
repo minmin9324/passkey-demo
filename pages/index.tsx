@@ -42,7 +42,11 @@ const Home = () => {
       console.log(verificationResult);
       if (verificationResult.success) {
         setMessage("Passkey 등록 성공!");
-        localStorage.setItem("publicKey", verificationResult.publicKey);
+
+        localStorage.setItem(
+          verificationResult.id,
+          verificationResult.publicKey
+        );
       } else {
         setMessage("Passkey 등록 실패");
       }
@@ -98,9 +102,9 @@ const PasskeyList = () => {
       });
 
       if (credential) {
-        console.log(credential);
         setPasskey(credential.id);
       }
+      setError("");
     } catch (err) {
       console.error(err);
       setError("Passkey 목록을 가져오는 중 오류가 발생했습니다.");
@@ -134,8 +138,6 @@ const LoginWithPasskey = () => {
 
       const options = await response.json();
 
-      console.log({ options });
-      // `challenge`를 Uint8Array로 변환
       await update({
         challenge: options.challenge,
       });
@@ -148,10 +150,7 @@ const LoginWithPasskey = () => {
         },
       });
 
-      console.log({ authenticationResponse });
-
-      // 서버로 인증 응답 전송
-      const publicKey = localStorage.getItem("publicKey");
+      const publicKey = localStorage.getItem(authenticationResponse.id);
 
       const verificationResponse = await fetch("/api/verify-authentication", {
         method: "POST",

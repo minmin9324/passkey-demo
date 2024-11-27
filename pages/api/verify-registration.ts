@@ -31,6 +31,7 @@ export default async function handler(
     ) {
       return res.status(200).json({
         success: true,
+        id: verification.registrationInfo.credential.id,
         publicKey: uint8ArrayToBase64url(
           verification.registrationInfo?.credential.publicKey
         ),
